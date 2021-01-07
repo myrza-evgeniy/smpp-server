@@ -1,2 +1,18 @@
 server:
   port : 8081
+
+smpp:
+  server:
+    host: 127.0.0.1
+    port: 2775
+    name: server
+    systemId: server
+    waitBindTimeout: 2000
+    requestTimeout: 2000
+    deliveryTimeOut: 2000
+    unbindTimeOut: 10
+    enquireResponseTimeout: 5000
+    monitorPoolSize: 10000
+    requestPoolSize: 2000
+    enquireIntervals: 5
+    attempts: 3
