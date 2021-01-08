@@ -63,6 +63,8 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
         try {
             LOGGER.debug("Accepted unbind request from {}", sessionWrapper.getSystemId());
             sessionWrapper.getSession().sendResponsePdu(unbind.createResponse());
+
+            freeUpResources();
         } catch (UnrecoverablePduException | SmppChannelException | InterruptedException | RecoverablePduException e) {
             LOGGER.error("Error sending unbind_resp to {}. Reason: ", sessionWrapper.getSystemId(), e);
         }
@@ -90,8 +92,18 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
     }
 
     @PreDestroy
-    void preDestroy() {
-        sessionWrapper = null;
-        msgExecutor.shutdown();
+    private synchronized void freeUpResources() {
+        try {
+            if (sessionWrapper != null && sessionWrapper.getSession() != null) {
+                sessionWrapper.getSession().destroy();
+                sessionWrapper = null;
+            }
+
+            if (!msgExecutor.isShutdown()) {
+                msgExecutor.shutdown();
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error free up resources. ", e);
+        }
     }
 }
