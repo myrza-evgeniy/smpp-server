@@ -30,9 +30,29 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
     private final ExecutorService msgExecutor = Executors.newFixedThreadPool(100);
     private final AtomicLong messageId = new AtomicLong(0);
 
+    @PreDestroy
+    synchronized void freeUpResources() {
+        try {
+            if (session != null) {
+                session.destroy();
+                session = null;
+            }
+
+            if (!msgExecutor.isShutdown()) {
+                msgExecutor.shutdown();
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error free up resources. ", e);
+        }
+    }
+
     @Override
     public PduResponse firePduRequestReceived(PduRequest pduRequest) {
         try {
+            if (!isValidSessionState()) {
+                return getDefaultResponseForUnexpectedError(pduRequest);
+            }
+
             switch (pduRequest.getCommandId()) {
                 case SmppConstants.CMD_ID_SUBMIT_SM:
                     msgExecutor.execute(() -> onAcceptSubmitSm((SubmitSm) pduRequest));
@@ -52,21 +72,28 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
                     return pduResponse;
             }
         } catch (Exception e) {
-            LOGGER.error("Error while trying to handle incoming pdu request from customer {}.", session.getConfiguration().getSystemId(), e);
-            PduResponse pduResponse = pduRequest.createResponse();
-            pduResponse.setCommandStatus(SmppConstants.STATUS_SYSERR);
-            return pduResponse;
+            if (session == null || !session.isBound()) {
+                LOGGER.error("Current session state is not valid to continue communication.");
+                return null;
+            } else if (pduRequest == null) {
+                LOGGER.error("Received null PDU request from customer {}.", session.getConfiguration().getSystemId());
+                return null;
+            } else {
+                LOGGER.error("Error while trying to handle incoming pdu request from customer {}.", session.getConfiguration().getSystemId(), e);
+                return getDefaultResponseForUnexpectedError(pduRequest);
+            }
         }
     }
 
     private void onAcceptUnbind(Unbind unbind) {
         try {
-            LOGGER.debug("Accepted unbind request from {}", session.getConfiguration().getSystemId());
+            LOGGER.info("Accepted unbind request from {}", session.getConfiguration().getSystemId());
             session.sendResponsePdu(unbind.createResponse());
 
-            freeUpResources();
         } catch (UnrecoverablePduException | SmppChannelException | InterruptedException | RecoverablePduException e) {
             LOGGER.error("Error sending unbind_resp to {}. Reason: ", session.getConfiguration().getSystemId(), e);
+        } finally {
+            freeUpResources();
         }
     }
 
@@ -91,19 +118,22 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
         }
     }
 
-    @PreDestroy
-    synchronized void freeUpResources() {
-        try {
-            if (session != null) {
-                session.destroy();
-                session = null;
-            }
-
-            if (!msgExecutor.isShutdown()) {
-                msgExecutor.shutdown();
-            }
-        } catch (Exception e) {
-            LOGGER.error("Error free up resources. ", e);
+    private boolean isValidSessionState() {
+        if (session == null) {
+            LOGGER.error("Unexpected critical situation - session is null.");
+            return false;
         }
+
+        if (!session.isBound()) {
+            LOGGER.error("Unexpected critical situation - session is unbound.");
+            return false;
+        }
+        return true;
+    }
+
+    private PduResponse getDefaultResponseForUnexpectedError(PduRequest<?> pduRequest) {
+        PduResponse pduResponse = pduRequest.createResponse();
+        pduResponse.setCommandStatus(SmppConstants.STATUS_SYSERR);
+        return pduResponse;
     }
 }
