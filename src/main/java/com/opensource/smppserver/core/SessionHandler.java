@@ -7,18 +7,14 @@ import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.pdu.BaseBind;
 import com.cloudhopper.smpp.pdu.BaseBindResp;
 import com.cloudhopper.smpp.type.SmppProcessingException;
-import com.opensource.smppserver.dto.SessionDto;
+import com.opensource.smppserver.dto.SessionWrapper;
 import com.opensource.smppserver.service.AuthService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Lookup;
 import org.springframework.stereotype.Component;
 
 @Component
 public class SessionHandler implements SmppServerHandler {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SessionHandler.class);
 
     private final AuthService authService;
 
@@ -37,13 +33,14 @@ public class SessionHandler implements SmppServerHandler {
     }
 
     @Override
-    public void sessionCreated(Long sessionId, SmppServerSession session, BaseBindResp preparedBindResponse) throws SmppProcessingException {
+    public void sessionCreated(Long sessionId, SmppServerSession session, BaseBindResp preparedBindResponse) {
         final IncomingMessageHandler incomingMessageHandler = getIncomingMessageHandler();
-        final SessionDto sessionDto = initSessionDto(sessionId, session);
+        final SessionWrapper sessionWrapper = initSessionDto(sessionId, session);
 
-        incomingMessageHandler.setSession(sessionDto);
+        incomingMessageHandler.setSessionWrapper(sessionWrapper);
         session.serverReady(incomingMessageHandler);
     }
+
 
     @Override
     public void sessionDestroyed(Long sessionId, SmppServerSession session) {
@@ -60,8 +57,18 @@ public class SessionHandler implements SmppServerHandler {
         return null;
     }
 
-    private SessionDto initSessionDto(Long sessionId, SmppServerSession session) {
-        return SessionDto.builder()
+    /***
+     * Creates new object of session with passed params.
+     *
+     * @param sessionId The unique numeric identifier assigned to the bind request.
+     *      Will be the same value between sessionBindRequested, sessionCreated,
+     *      and sessionDestroyed method calls.
+     * @param session The server session associated with the bind request and
+     *      underlying channel.
+     * @return new object of session.
+     */
+    private SessionWrapper initSessionDto(Long sessionId, SmppServerSession session) {
+        return SessionWrapper.builder()
                 .sessionId(sessionId)
                 .session(session)
                 .systemId(session.getConfiguration().getSystemId())

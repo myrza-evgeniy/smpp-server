@@ -3,7 +3,10 @@ package com.opensource.smppserver.core;
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
 import com.cloudhopper.smpp.pdu.*;
-import com.opensource.smppserver.dto.SessionDto;
+import com.cloudhopper.smpp.type.RecoverablePduException;
+import com.cloudhopper.smpp.type.SmppChannelException;
+import com.cloudhopper.smpp.type.UnrecoverablePduException;
+import com.opensource.smppserver.dto.SessionWrapper;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,6 +17,7 @@ import org.springframework.stereotype.Component;
 import javax.annotation.PreDestroy;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -22,45 +26,72 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(IncomingMessageHandler.class);
 
     @Setter
-    private SessionDto session;
-    private final ExecutorService executor = Executors.newFixedThreadPool(100);
+    private SessionWrapper sessionWrapper;
+    private final ExecutorService msgExecutor = Executors.newFixedThreadPool(100);
+    private final AtomicLong messageId = new AtomicLong(0);
 
     @Override
     public PduResponse firePduRequestReceived(PduRequest pduRequest) {
-        switch (pduRequest.getCommandId()) {
-            case SmppConstants.CMD_ID_SUBMIT_SM:
-                executor.execute(() -> onAcceptSubmitSm((SubmitSm) pduRequest));
-                return null;
+        try {
+            switch (pduRequest.getCommandId()) {
+                case SmppConstants.CMD_ID_SUBMIT_SM:
+                    msgExecutor.execute(() -> onAcceptSubmitSm((SubmitSm) pduRequest));
+                    return null;
 
-            case SmppConstants.CMD_ID_ENQUIRE_LINK:
-                executor.execute(() -> onAcceptEnquiredLink((EnquireLink) pduRequest));
-                return null;
+                case SmppConstants.CMD_ID_ENQUIRE_LINK:
+                    msgExecutor.execute(() -> onAcceptEnquiredLink((EnquireLink) pduRequest));
+                    return null;
 
-            case SmppConstants.CMD_ID_UNBIND:
-                executor.execute(() -> onAcceptUnbind((Unbind) pduRequest));
-                return null;
+                case SmppConstants.CMD_ID_UNBIND:
+                    msgExecutor.execute(() -> onAcceptUnbind((Unbind) pduRequest));
+                    return null;
 
-            default:
-                PduResponse pduResponse = pduRequest.createResponse();
-                pduResponse.setCommandStatus(SmppConstants.STATUS_INVCMDID);
-                return pduResponse;
+                default:
+                    PduResponse pduResponse = pduRequest.createResponse();
+                    pduResponse.setCommandStatus(SmppConstants.STATUS_INVCMDID);
+                    return pduResponse;
+            }
+        } catch (Exception e) {
+            LOGGER.error("Error while trying to handle incoming pdu request from customer {}.", sessionWrapper.getSystemId(), e);
+            PduResponse pduResponse = pduRequest.createResponse();
+            pduResponse.setCommandStatus(SmppConstants.STATUS_SYSERR);
+            return pduResponse;
         }
     }
 
     private void onAcceptUnbind(Unbind unbind) {
-        // TODO: Add handling request
+        try {
+            LOGGER.debug("Accepted unbind request from {}", sessionWrapper.getSystemId());
+            sessionWrapper.getSession().sendResponsePdu(unbind.createResponse());
+        } catch (UnrecoverablePduException | SmppChannelException | InterruptedException | RecoverablePduException e) {
+            LOGGER.error("Error sending unbind_resp to {}. Reason: ", sessionWrapper.getSystemId(), e);
+        }
     }
 
     private void onAcceptEnquiredLink(EnquireLink enquireLink) {
-        // TODO: Add handling request
+        try {
+            LOGGER.debug("Accepted enquire_link from {}", sessionWrapper.getSystemId());
+            sessionWrapper.getSession().sendResponsePdu(enquireLink.createResponse());
+        } catch (UnrecoverablePduException | SmppChannelException | InterruptedException | RecoverablePduException e) {
+            LOGGER.error("Error sending enquire_link_resp to {}. Reason: ", sessionWrapper.getSystemId(), e);
+        }
     }
 
     private void onAcceptSubmitSm(SubmitSm submitSm) {
-        // TODO: Add handling request
+        final long messageId = this.messageId.incrementAndGet();
+        final SubmitSmResp response = submitSm.createResponse();
+        response.setMessageId(Long.toString(messageId));
+
+        try {
+            sessionWrapper.getSession().sendResponsePdu(response);
+        } catch (UnrecoverablePduException | SmppChannelException | InterruptedException | RecoverablePduException e) {
+            LOGGER.error("Error sending enquire_link_resp to {}. Reason: ", sessionWrapper.getSystemId(), e);
+        }
     }
 
     @PreDestroy
     void preDestroy() {
-        executor.shutdown();
+        sessionWrapper = null;
+        msgExecutor.shutdown();
     }
 }

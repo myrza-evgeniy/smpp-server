@@ -6,7 +6,7 @@ import lombok.Getter;
 
 @Getter
 @Builder
-public class SessionDto {
+public class SessionWrapper {
     private final Long sessionId;
     private final String systemId;
     private final SmppServerSession session;

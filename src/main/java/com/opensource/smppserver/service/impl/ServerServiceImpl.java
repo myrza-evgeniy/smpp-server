@@ -39,17 +39,23 @@ public class ServerServiceImpl implements ServerService {
         try {
             smppServer.start();
         } catch (SmppChannelException e) {
-            LOGGER.error("Failed to start smpp server", e);
+            LOGGER.error("Failed to start smpp server. ", e);
         }
     }
 
     @Override
     public void stop() {
-        smppServer.destroy();
-        monitor.shutdown();
-        executor.shutdown();
+        try {
+            smppServer.destroy();
+        } catch (Exception e) {
+            LOGGER.error("Failed to stop smpp server. ", e);
+        } finally {
+            monitor.shutdown();
+            executor.shutdown();
+        }
     }
 
+    // TODO: Need to remake configure server
     private void configureSmppServer() {
         SmppServerConfiguration smppServerConfiguration = new SmppServerConfiguration();
         smppServerConfiguration.setHost(serverProperties.getHost());
