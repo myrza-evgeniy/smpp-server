@@ -39,7 +39,7 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
                     return null;
 
                 case SmppConstants.CMD_ID_ENQUIRE_LINK:
-                    msgExecutor.execute(() -> onAcceptEnquiredLink((EnquireLink) pduRequest));
+                    msgExecutor.execute(() -> onAcceptEnquireLink((EnquireLink) pduRequest));
                     return null;
 
                 case SmppConstants.CMD_ID_UNBIND:
@@ -68,7 +68,7 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
         }
     }
 
-    private void onAcceptEnquiredLink(EnquireLink enquireLink) {
+    private void onAcceptEnquireLink(EnquireLink enquireLink) {
         try {
             LOGGER.debug("Accepted enquire_link from {}", sessionWrapper.getSystemId());
             sessionWrapper.getSession().sendResponsePdu(enquireLink.createResponse());
