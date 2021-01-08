@@ -3,12 +3,15 @@ package com.opensource.smppserver.core;
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
 import com.cloudhopper.smpp.pdu.*;
+import com.opensource.smppserver.dto.SessionDto;
+import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PreDestroy;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -18,6 +21,8 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IncomingMessageHandler.class);
 
+    @Setter
+    private SessionDto session;
     private final ExecutorService executor = Executors.newFixedThreadPool(100);
 
     @Override
@@ -52,5 +57,10 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
 
     private void onAcceptSubmitSm(SubmitSm submitSm) {
         // TODO: Add handling request
+    }
+
+    @PreDestroy
+    void preDestroy() {
+        executor.shutdown();
     }
 }

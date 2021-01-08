@@ -11,10 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -26,6 +23,8 @@ public class ServerServiceImpl implements ServerService {
     private final SessionHandler sessionHandler;
 
     private DefaultSmppServer smppServer;
+    private ScheduledExecutorService monitor;
+    private ExecutorService executor;
 
     @Autowired
     public ServerServiceImpl(ServerProperties serverProperties, SessionHandler sessionHandler) {
@@ -47,6 +46,8 @@ public class ServerServiceImpl implements ServerService {
     @Override
     public void stop() {
         smppServer.destroy();
+        monitor.shutdown();
+        executor.shutdown();
     }
 
     private void configureSmppServer() {
@@ -59,18 +60,21 @@ public class ServerServiceImpl implements ServerService {
         smppServerConfiguration.setDefaultWindowWaitTimeout(30000);
         smppServerConfiguration.setDefaultWindowSize(1000);
 
-        ExecutorService executor = Executors.newCachedThreadPool();
-        smppServer = new DefaultSmppServer(smppServerConfiguration, sessionHandler, executor, createMonitor());
+        monitor = createMonitor();
+        executor = Executors.newCachedThreadPool();
+
+        smppServer = new DefaultSmppServer(smppServerConfiguration, sessionHandler, executor, monitor);
     }
 
+    // TODO: Need to investigate incrementing this sequence
     private ScheduledExecutorService createMonitor() {
-        return Executors.newScheduledThreadPool(serverProperties.getMonitorPoolSize(), new ThreadFactory() {
+        return Executors.newScheduledThreadPool(1, new ThreadFactory() {
             private final AtomicInteger sequence = new AtomicInteger(0);
 
             @Override
             public Thread newThread(Runnable r) {
                 Thread t = new Thread(r);
-                t.setName("SmppServerSessionWindowMonitorPool-" + sequence.getAndIncrement());
+                t.setName("SmppCustomerSessionWindowMonitorPool-" + sequence.getAndIncrement());
                 return t;
             }
         });
