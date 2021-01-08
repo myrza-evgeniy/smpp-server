@@ -18,21 +18,6 @@ class IncomingMessageHandlerTest {
     }
 
     @Test
-    void testExpectedNullPointerException() {
-        Assertions.assertThrows(NullPointerException.class, () -> {
-            incomingMessageHandler.firePduRequestReceived(null);
-        });
-    }
-
-    @Test
-    void testSupportedPduRequests() {
-        // supported pdu requests: enquireLink, submitSm, unbind
-        Assertions.assertNull(incomingMessageHandler.firePduRequestReceived(new EnquireLink()));
-        Assertions.assertNull(incomingMessageHandler.firePduRequestReceived(new SubmitSm()));
-        Assertions.assertNull(incomingMessageHandler.firePduRequestReceived(new Unbind()));
-    }
-
-    @Test
     void testUnsupportedPduRequests() {
         PduResponse actualPduResponse;
 
