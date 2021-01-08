@@ -35,7 +35,7 @@ public class SessionHandler implements SmppServerHandler {
     @Override
     public void sessionCreated(Long sessionId, SmppServerSession session, BaseBindResp preparedBindResponse) {
         final IncomingMessageHandler incomingMessageHandler = getIncomingMessageHandler();
-        final SessionWrapper sessionWrapper = initSessionDto(sessionId, session);
+        final SessionWrapper sessionWrapper = initSessionWrapper(sessionId, session);
 
         incomingMessageHandler.setSessionWrapper(sessionWrapper);
         session.serverReady(incomingMessageHandler);
@@ -67,7 +67,7 @@ public class SessionHandler implements SmppServerHandler {
      *      underlying channel.
      * @return new object of session.
      */
-    private SessionWrapper initSessionDto(Long sessionId, SmppServerSession session) {
+    private SessionWrapper initSessionWrapper(Long sessionId, SmppServerSession session) {
         return SessionWrapper.builder()
                 .sessionId(sessionId)
                 .session(session)
