@@ -9,6 +9,8 @@ import com.cloudhopper.smpp.pdu.BaseBindResp;
 import com.cloudhopper.smpp.type.SmppProcessingException;
 import com.opensource.smppserver.dto.SessionWrapper;
 import com.opensource.smppserver.service.AuthService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Lookup;
 import org.springframework.stereotype.Component;
@@ -16,11 +18,15 @@ import org.springframework.stereotype.Component;
 @Component
 public class SessionHandler implements SmppServerHandler {
 
+    private static final Logger LOGGER = LoggerFactory.getLogger(SessionHandler.class);
+
     private final AuthService authService;
+    private final SessionStorage sessionStorage;
 
     @Autowired
-    public SessionHandler(AuthService authService) {
+    public SessionHandler(AuthService authService, SessionStorage sessionStorage) {
         this.authService = authService;
+        this.sessionStorage = sessionStorage;
     }
 
     @Override
@@ -37,6 +43,8 @@ public class SessionHandler implements SmppServerHandler {
         final IncomingMessageHandler incomingMessageHandler = getIncomingMessageHandler();
         final SessionWrapper sessionWrapper = initSessionWrapper(session, incomingMessageHandler);
 
+        sessionStorage.addSession(sessionId, sessionWrapper);
+
         incomingMessageHandler.setSession(session);
         session.serverReady(incomingMessageHandler);
     }
@@ -44,7 +52,21 @@ public class SessionHandler implements SmppServerHandler {
 
     @Override
     public void sessionDestroyed(Long sessionId, SmppServerSession session) {
-        // TODO: Add check that we are
+        final SessionWrapper sessionWrapper = sessionStorage.getSessionById(sessionId);
+
+        if (sessionWrapper != null) {
+            try {
+                if (sessionWrapper.getIncomingMessageHandler() != null && sessionWrapper.getSession() != null) {
+                    sessionWrapper.getIncomingMessageHandler().freeUpResources();
+                } else if (sessionWrapper.getSession() != null) {
+                    sessionWrapper.getSession().destroy();
+                }
+            } catch (Exception e) {
+                LOGGER.error("Error free up session {} resources. Reason: ", sessionId, e);
+            } finally {
+                sessionStorage.removeSessionById(sessionId);
+            }
+        }
     }
 
     /**

@@ -92,7 +92,7 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
     }
 
     @PreDestroy
-    private synchronized void freeUpResources() {
+    synchronized void freeUpResources() {
         try {
             if (session != null) {
                 session.destroy();
