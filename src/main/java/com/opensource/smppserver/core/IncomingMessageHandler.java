@@ -1,12 +1,12 @@
 package com.opensource.smppserver.core;
 
 import com.cloudhopper.smpp.SmppConstants;
+import com.cloudhopper.smpp.SmppServerSession;
 import com.cloudhopper.smpp.impl.DefaultSmppSessionHandler;
 import com.cloudhopper.smpp.pdu.*;
 import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
-import com.opensource.smppserver.dto.SessionWrapper;
 import lombok.Setter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +26,7 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(IncomingMessageHandler.class);
 
     @Setter
-    private SessionWrapper sessionWrapper;
+    private SmppServerSession session;
     private final ExecutorService msgExecutor = Executors.newFixedThreadPool(100);
     private final AtomicLong messageId = new AtomicLong(0);
 
@@ -52,7 +52,7 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
                     return pduResponse;
             }
         } catch (Exception e) {
-            LOGGER.error("Error while trying to handle incoming pdu request from customer {}.", sessionWrapper.getSystemId(), e);
+            LOGGER.error("Error while trying to handle incoming pdu request from customer {}.", session.getConfiguration().getSystemId(), e);
             PduResponse pduResponse = pduRequest.createResponse();
             pduResponse.setCommandStatus(SmppConstants.STATUS_SYSERR);
             return pduResponse;
@@ -61,21 +61,21 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
 
     private void onAcceptUnbind(Unbind unbind) {
         try {
-            LOGGER.debug("Accepted unbind request from {}", sessionWrapper.getSystemId());
-            sessionWrapper.getSession().sendResponsePdu(unbind.createResponse());
+            LOGGER.debug("Accepted unbind request from {}", session.getConfiguration().getSystemId());
+            session.sendResponsePdu(unbind.createResponse());
 
             freeUpResources();
         } catch (UnrecoverablePduException | SmppChannelException | InterruptedException | RecoverablePduException e) {
-            LOGGER.error("Error sending unbind_resp to {}. Reason: ", sessionWrapper.getSystemId(), e);
+            LOGGER.error("Error sending unbind_resp to {}. Reason: ", session.getConfiguration().getSystemId(), e);
         }
     }
 
     private void onAcceptEnquireLink(EnquireLink enquireLink) {
         try {
-            LOGGER.debug("Accepted enquire_link from {}", sessionWrapper.getSystemId());
-            sessionWrapper.getSession().sendResponsePdu(enquireLink.createResponse());
+            LOGGER.debug("Accepted enquire_link from {}", session.getConfiguration().getSystemId());
+            session.sendResponsePdu(enquireLink.createResponse());
         } catch (UnrecoverablePduException | SmppChannelException | InterruptedException | RecoverablePduException e) {
-            LOGGER.error("Error sending enquire_link_resp to {}. Reason: ", sessionWrapper.getSystemId(), e);
+            LOGGER.error("Error sending enquire_link_resp to {}. Reason: ", session.getConfiguration().getSystemId(), e);
         }
     }
 
@@ -85,18 +85,18 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
         response.setMessageId(Long.toString(messageId));
 
         try {
-            sessionWrapper.getSession().sendResponsePdu(response);
+            session.sendResponsePdu(response);
         } catch (UnrecoverablePduException | SmppChannelException | InterruptedException | RecoverablePduException e) {
-            LOGGER.error("Error sending enquire_link_resp to {}. Reason: ", sessionWrapper.getSystemId(), e);
+            LOGGER.error("Error sending enquire_link_resp to {}. Reason: ", session.getConfiguration().getSystemId(), e);
         }
     }
 
     @PreDestroy
     private synchronized void freeUpResources() {
         try {
-            if (sessionWrapper != null && sessionWrapper.getSession() != null) {
-                sessionWrapper.getSession().destroy();
-                sessionWrapper = null;
+            if (session != null) {
+                session.destroy();
+                session = null;
             }
 
             if (!msgExecutor.isShutdown()) {

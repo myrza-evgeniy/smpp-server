@@ -35,16 +35,16 @@ public class SessionHandler implements SmppServerHandler {
     @Override
     public void sessionCreated(Long sessionId, SmppServerSession session, BaseBindResp preparedBindResponse) {
         final IncomingMessageHandler incomingMessageHandler = getIncomingMessageHandler();
-        final SessionWrapper sessionWrapper = initSessionWrapper(sessionId, session);
+        final SessionWrapper sessionWrapper = initSessionWrapper(session, incomingMessageHandler);
 
-        incomingMessageHandler.setSessionWrapper(sessionWrapper);
+        incomingMessageHandler.setSession(session);
         session.serverReady(incomingMessageHandler);
     }
 
 
     @Override
     public void sessionDestroyed(Long sessionId, SmppServerSession session) {
-        // TODO: Add removing session
+        // TODO: Add check that we are
     }
 
     /**
@@ -57,21 +57,19 @@ public class SessionHandler implements SmppServerHandler {
         return null;
     }
 
+
+    // TODO: Need to update this javadoc
     /***
-     * Creates new object of session with passed params.
+     * Creates new session wrapper with passed parameters.
      *
-     * @param sessionId The unique numeric identifier assigned to the bind request.
-     *      Will be the same value between sessionBindRequested, sessionCreated,
-     *      and sessionDestroyed method calls.
      * @param session The server session associated with the bind request and
      *      underlying channel.
-     * @return new object of session.
+     * @return new session wrapper.
      */
-    private SessionWrapper initSessionWrapper(Long sessionId, SmppServerSession session) {
+    private SessionWrapper initSessionWrapper(SmppServerSession session, IncomingMessageHandler incomingMessageHandler) {
         return SessionWrapper.builder()
-                .sessionId(sessionId)
                 .session(session)
-                .systemId(session.getConfiguration().getSystemId())
+                .incomingMessageHandler(incomingMessageHandler)
                 .build();
     }
 }
