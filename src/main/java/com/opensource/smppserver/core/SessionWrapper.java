@@ -1,7 +1,6 @@
-package com.opensource.smppserver.config;
+package com.opensource.smppserver.core;
 
 import com.cloudhopper.smpp.SmppServerSession;
-import com.opensource.smppserver.core.IncomingMessageHandler;
 import lombok.Builder;
 import lombok.Getter;
 

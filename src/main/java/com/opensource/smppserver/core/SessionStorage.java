@@ -1,6 +1,5 @@
 package com.opensource.smppserver.core;
 
-import com.opensource.smppserver.config.SessionWrapper;
 import org.springframework.stereotype.Component;
 
 import java.util.Map;
