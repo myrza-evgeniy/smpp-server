@@ -7,7 +7,7 @@ import com.cloudhopper.smpp.pdu.*;
 import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
-import lombok.Setter;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
@@ -21,12 +21,12 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
+@RequiredArgsConstructor
 public class IncomingMessageHandler extends DefaultSmppSessionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(IncomingMessageHandler.class);
 
-    @Setter
-    private SmppServerSession session;
+    private final SmppServerSession session;
     private final ExecutorService msgExecutor = Executors.newFixedThreadPool(100);
     private final AtomicLong messageId = new AtomicLong(0);
 
@@ -35,7 +35,6 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
         try {
             if (session != null) {
                 session.destroy();
-                session = null;
             }
 
             if (!msgExecutor.isShutdown()) {
@@ -49,9 +48,7 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
     @Override
     public PduResponse firePduRequestReceived(PduRequest pduRequest) {
         try {
-            if (!isValidSessionState()) {
-                return getDefaultResponseForUnexpectedError(pduRequest);
-            }
+            if (!isValidSessionState()) return getDefaultResponseForUnexpectedError(pduRequest);
 
             switch (pduRequest.getCommandId()) {
                 case SmppConstants.CMD_ID_SUBMIT_SM:
@@ -89,7 +86,6 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
         try {
             LOGGER.info("Accepted unbind request from {}", session.getConfiguration().getSystemId());
             session.sendResponsePdu(unbind.createResponse());
-
         } catch (UnrecoverablePduException | SmppChannelException | InterruptedException | RecoverablePduException e) {
             LOGGER.error("Error sending unbind_resp to {}. Reason: ", session.getConfiguration().getSystemId(), e);
         } finally {
@@ -107,6 +103,7 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
     }
 
     private void onAcceptSubmitSm(SubmitSm submitSm) {
+        LOGGER.debug("Accepted submit_sm from {}", session.getConfiguration().getSystemId());
         final long messageId = this.messageId.incrementAndGet();
         final SubmitSmResp response = submitSm.createResponse();
         response.setMessageId(Long.toString(messageId));

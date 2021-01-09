@@ -23,6 +23,6 @@ class SessionHandlerTest {
         SessionHandler second = ctx.getBean(SessionHandler.class);
 
         assertEquals(first, second);
-        assertNotEquals(first.getIncomingMessageHandler(), second.getIncomingMessageHandler());
+        assertNotEquals(first.getIncomingMessageHandler(null), second.getIncomingMessageHandler(null));
     }
 }

@@ -1,4 +1,4 @@
-package com.opensource.smppserver.dto;
+package com.opensource.smppserver.config;
 
 import com.cloudhopper.smpp.SmppServerSession;
 import com.opensource.smppserver.core.IncomingMessageHandler;

@@ -7,27 +7,23 @@ import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.pdu.BaseBind;
 import com.cloudhopper.smpp.pdu.BaseBindResp;
 import com.cloudhopper.smpp.type.SmppProcessingException;
-import com.opensource.smppserver.dto.SessionWrapper;
+import com.opensource.smppserver.config.IncomingMessageHandlerFactory;
+import com.opensource.smppserver.config.SessionWrapper;
 import com.opensource.smppserver.service.AuthService;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Lookup;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class SessionHandler implements SmppServerHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(SessionHandler.class);
 
     private final AuthService authService;
     private final SessionStorage sessionStorage;
-
-    @Autowired
-    public SessionHandler(AuthService authService, SessionStorage sessionStorage) {
-        this.authService = authService;
-        this.sessionStorage = sessionStorage;
-    }
+    private final IncomingMessageHandlerFactory incomingMessageHandlerFactory;
 
     @Override
     public void sessionBindRequested(Long sessionId, SmppSessionConfiguration sessionConfiguration, BaseBind bindRequest) throws SmppProcessingException {
@@ -40,15 +36,13 @@ public class SessionHandler implements SmppServerHandler {
 
     @Override
     public void sessionCreated(Long sessionId, SmppServerSession session, BaseBindResp preparedBindResponse) {
-        final IncomingMessageHandler incomingMessageHandler = getIncomingMessageHandler();
+        final IncomingMessageHandler incomingMessageHandler = getIncomingMessageHandler(session);
         final SessionWrapper sessionWrapper = initSessionWrapper(session, incomingMessageHandler);
 
         sessionStorage.addSession(sessionId, sessionWrapper);
 
-        incomingMessageHandler.setSession(session);
         session.serverReady(incomingMessageHandler);
     }
-
 
     @Override
     public void sessionDestroyed(Long sessionId, SmppServerSession session) {
@@ -74,9 +68,8 @@ public class SessionHandler implements SmppServerHandler {
      *
      * @return new prototype-scoped bean.
      */
-    @Lookup
-    public IncomingMessageHandler getIncomingMessageHandler() {
-        return null;
+    public IncomingMessageHandler getIncomingMessageHandler(SmppServerSession session) {
+        return incomingMessageHandlerFactory.getInstance(session);
     }
 
 
