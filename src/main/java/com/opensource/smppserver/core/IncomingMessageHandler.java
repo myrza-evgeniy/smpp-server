@@ -32,7 +32,7 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
     @Override
     public PduResponse firePduRequestReceived(PduRequest pduRequest) {
         try {
-            if (!isValidSessionState()) return getDefaultResponseForUnexpectedError(pduRequest);
+            if (isNotValidSessionState()) return getDefaultResponseForUnexpectedError(pduRequest);
 
             switch (pduRequest.getCommandId()) {
                 case SmppConstants.CMD_ID_SUBMIT_SM:
@@ -53,7 +53,7 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
                     return pduResponse;
             }
         } catch (Exception e) {
-            if (!isValidSessionState()) {
+            if (isNotValidSessionState()) {
                 LOGGER.error("Current session state is not valid to continue communication.");
                 return null;
             } else if (pduRequest == null) {
@@ -103,17 +103,17 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
         }
     }
 
-    private boolean isValidSessionState() {
+    private boolean isNotValidSessionState() {
         if (sessionWrapper == null || sessionWrapper.getSession() == null) {
             LOGGER.error("Unexpected critical situation - session is null.");
-            return false;
+            return true;
         }
 
         if (!sessionWrapper.getSession().isBound()) {
             LOGGER.error("Unexpected critical situation - session is unbound.");
-            return false;
+            return true;
         }
-        return true;
+        return false;
     }
 
     private PduResponse getDefaultResponseForUnexpectedError(PduRequest<?> pduRequest) {
