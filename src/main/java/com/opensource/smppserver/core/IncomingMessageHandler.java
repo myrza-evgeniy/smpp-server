@@ -53,7 +53,7 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
                     return pduResponse;
             }
         } catch (Exception e) {
-            if (sessionWrapper == null || !sessionWrapper.getSession().isBound()) {
+            if (!isValidSessionState()) {
                 LOGGER.error("Current session state is not valid to continue communication.");
                 return null;
             } else if (pduRequest == null) {
@@ -104,7 +104,7 @@ public class IncomingMessageHandler extends DefaultSmppSessionHandler {
     }
 
     private boolean isValidSessionState() {
-        if (sessionWrapper == null) {
+        if (sessionWrapper == null || sessionWrapper.getSession() == null) {
             LOGGER.error("Unexpected critical situation - session is null.");
             return false;
         }
