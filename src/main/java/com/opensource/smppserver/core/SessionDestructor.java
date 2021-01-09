@@ -1,6 +1,7 @@
 package com.opensource.smppserver.core;
 
 import com.cloudhopper.smpp.SmppServerSession;
+import com.opensource.smppserver.repository.SessionStorage;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

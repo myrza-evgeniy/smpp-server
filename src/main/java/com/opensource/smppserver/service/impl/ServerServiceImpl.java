@@ -6,15 +6,16 @@ import com.cloudhopper.smpp.type.SmppChannelException;
 import com.opensource.smppserver.config.ServerProperties;
 import com.opensource.smppserver.core.SessionHandler;
 import com.opensource.smppserver.service.ServerService;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
+@RequiredArgsConstructor
 public class ServerServiceImpl implements ServerService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerServiceImpl.class);
@@ -25,12 +26,6 @@ public class ServerServiceImpl implements ServerService {
     private DefaultSmppServer smppServer;
     private ScheduledExecutorService monitor;
     private ExecutorService executor;
-
-    @Autowired
-    public ServerServiceImpl(ServerProperties serverProperties, SessionHandler sessionHandler) {
-        this.serverProperties = serverProperties;
-        this.sessionHandler = sessionHandler;
-    }
 
     @Override
     public void start() {
