@@ -22,6 +22,7 @@ public class SessionHandler implements SmppServerHandler {
 
     private final AuthService authService;
     private final SessionStorage sessionStorage;
+    private final SessionDestroyListener sessionDestroyListener;
     private final IncomingMessageHandlerFactory incomingMessageHandlerFactory;
 
     @Override
@@ -35,8 +36,8 @@ public class SessionHandler implements SmppServerHandler {
 
     @Override
     public void sessionCreated(Long sessionId, SmppServerSession session, BaseBindResp preparedBindResponse) {
-        final IncomingMessageHandler incomingMessageHandler = getIncomingMessageHandler(session);
-        final SessionWrapper sessionWrapper = initSessionWrapper(session, incomingMessageHandler);
+        final SessionWrapper sessionWrapper = initSessionWrapper(sessionId, session);
+        final IncomingMessageHandler incomingMessageHandler = getIncomingMessageHandler(sessionWrapper);
 
         sessionStorage.addSession(sessionId, sessionWrapper);
 
@@ -45,21 +46,8 @@ public class SessionHandler implements SmppServerHandler {
 
     @Override
     public void sessionDestroyed(Long sessionId, SmppServerSession session) {
-        final SessionWrapper sessionWrapper = sessionStorage.getSessionById(sessionId);
-
-        if (sessionWrapper != null) {
-            try {
-                if (sessionWrapper.getIncomingMessageHandler() != null && sessionWrapper.getSession() != null) {
-                    sessionWrapper.getIncomingMessageHandler().freeUpResources();
-                } else if (sessionWrapper.getSession() != null) {
-                    sessionWrapper.getSession().destroy();
-                }
-            } catch (Exception e) {
-                LOGGER.error("Error free up session {} resources. Reason: ", sessionId, e);
-            } finally {
-                sessionStorage.removeSessionById(sessionId);
-            }
-        }
+        LOGGER.info("Session {} of customer {} destroyed. Try to free up resources.", sessionId, session.getConfiguration().getSystemId());
+        sessionDestroyListener.destroy(sessionId, session);
     }
 
     /**
@@ -67,8 +55,8 @@ public class SessionHandler implements SmppServerHandler {
      *
      * @return new prototype-scoped bean.
      */
-    public IncomingMessageHandler getIncomingMessageHandler(SmppServerSession session) {
-        return incomingMessageHandlerFactory.getInstance(session);
+    public IncomingMessageHandler getIncomingMessageHandler(SessionWrapper sessionWrapper) {
+        return incomingMessageHandlerFactory.getInstance(sessionWrapper, sessionDestroyListener);
     }
 
 
@@ -80,10 +68,11 @@ public class SessionHandler implements SmppServerHandler {
      *      underlying channel.
      * @return new session wrapper.
      */
-    private SessionWrapper initSessionWrapper(SmppServerSession session, IncomingMessageHandler incomingMessageHandler) {
+    private SessionWrapper initSessionWrapper(Long sessionId, SmppServerSession session) {
         return SessionWrapper.builder()
+                .systemId(session.getConfiguration().getSystemId())
+                .sessionId(sessionId)
                 .session(session)
-                .incomingMessageHandler(incomingMessageHandler)
                 .build();
     }
 }

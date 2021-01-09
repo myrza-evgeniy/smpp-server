@@ -7,6 +7,7 @@ import lombok.Getter;
 @Getter
 @Builder
 public class SessionWrapper {
+    private final String systemId;
+    private final Long sessionId;
     private final SmppServerSession session;
-    private final IncomingMessageHandler incomingMessageHandler;
 }
