@@ -8,13 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class IncomingMessageHandlerTest {
+class MessageHandlerTest {
 
-    private final IncomingMessageHandler incomingMessageHandler;
+    private final MessageHandler messageHandler;
 
     @Autowired
-    private IncomingMessageHandlerTest(IncomingMessageHandler incomingMessageHandler) {
-        this.incomingMessageHandler = incomingMessageHandler;
+    private MessageHandlerTest(MessageHandler messageHandler) {
+        this.messageHandler = messageHandler;
     }
 
     @Test
@@ -23,31 +23,31 @@ class IncomingMessageHandlerTest {
 
         // cancelSm
         PduRequest<?> cancelSmRequest = new CancelSm();
-        actualPduResponse = incomingMessageHandler.firePduRequestReceived((cancelSmRequest));
+        actualPduResponse = messageHandler.firePduRequestReceived((cancelSmRequest));
         Assertions.assertEquals(CancelSmResp.class, actualPduResponse.getClass());
         Assertions.assertEquals(SmppConstants.STATUS_INVCMDID, actualPduResponse.getCommandStatus());
 
         // dataSm
         PduRequest<?> dataSmRequest = new DataSm();
-        actualPduResponse = incomingMessageHandler.firePduRequestReceived((dataSmRequest));
+        actualPduResponse = messageHandler.firePduRequestReceived((dataSmRequest));
         Assertions.assertEquals(DataSmResp.class, actualPduResponse.getClass());
         Assertions.assertEquals(SmppConstants.STATUS_INVCMDID, actualPduResponse.getCommandStatus());
 
         // deliverSm
         PduRequest<?> deliverSmRequest = new DeliverSm();
-        actualPduResponse = incomingMessageHandler.firePduRequestReceived((deliverSmRequest));
+        actualPduResponse = messageHandler.firePduRequestReceived((deliverSmRequest));
         Assertions.assertEquals(DeliverSmResp.class, actualPduResponse.getClass());
         Assertions.assertEquals(SmppConstants.STATUS_INVCMDID, actualPduResponse.getCommandStatus());
 
         // querySm
         PduRequest<?> querySmRequest = new QuerySm();
-        actualPduResponse = incomingMessageHandler.firePduRequestReceived((querySmRequest));
+        actualPduResponse = messageHandler.firePduRequestReceived((querySmRequest));
         Assertions.assertEquals(QuerySmResp.class, actualPduResponse.getClass());
         Assertions.assertEquals(SmppConstants.STATUS_INVCMDID, actualPduResponse.getCommandStatus());
 
         // replaceSm
         PduRequest<?> replaceSmRequest = new ReplaceSm();
-        actualPduResponse = incomingMessageHandler.firePduRequestReceived((replaceSmRequest));
+        actualPduResponse = messageHandler.firePduRequestReceived((replaceSmRequest));
         Assertions.assertEquals(ReplaceSmResp.class, actualPduResponse.getClass());
         Assertions.assertEquals(SmppConstants.STATUS_INVCMDID, actualPduResponse.getCommandStatus());
     }

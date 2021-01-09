@@ -7,7 +7,7 @@ import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.pdu.BaseBind;
 import com.cloudhopper.smpp.pdu.BaseBindResp;
 import com.cloudhopper.smpp.type.SmppProcessingException;
-import com.opensource.smppserver.config.IncomingMessageHandlerFactory;
+import com.opensource.smppserver.config.MessageHandlerFactory;
 import com.opensource.smppserver.repository.SessionStorage;
 import com.opensource.smppserver.service.AuthService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +24,7 @@ public class SessionHandler implements SmppServerHandler {
     private final AuthService authService;
     private final SessionStorage sessionStorage;
     private final SessionDestroyListener sessionDestroyListener;
-    private final IncomingMessageHandlerFactory incomingMessageHandlerFactory;
+    private final MessageHandlerFactory messageHandlerFactory;
 
     @Override
     public void sessionBindRequested(Long sessionId, SmppSessionConfiguration sessionConfiguration, BaseBind bindRequest) throws SmppProcessingException {
@@ -38,11 +38,11 @@ public class SessionHandler implements SmppServerHandler {
     @Override
     public void sessionCreated(Long sessionId, SmppServerSession session, BaseBindResp preparedBindResponse) {
         final SessionWrapper sessionWrapper = initSessionWrapper(sessionId, session);
-        final IncomingMessageHandler incomingMessageHandler = getIncomingMessageHandler(sessionWrapper);
+        final MessageHandler messageHandler = getMessageHandler(sessionWrapper);
 
         sessionStorage.addSession(sessionId, sessionWrapper);
 
-        session.serverReady(incomingMessageHandler);
+        session.serverReady(messageHandler);
     }
 
     @Override
@@ -52,12 +52,12 @@ public class SessionHandler implements SmppServerHandler {
     }
 
     /**
-     * Inject prototype-scoped bean {@link IncomingMessageHandler} into a singleton bean {@link SessionHandler}.
+     * Inject prototype-scoped bean {@link MessageHandler} into a singleton bean {@link SessionHandler}.
      *
      * @return new prototype-scoped bean.
      */
-    public IncomingMessageHandler getIncomingMessageHandler(SessionWrapper sessionWrapper) {
-        return incomingMessageHandlerFactory.getInstance(sessionWrapper, sessionDestroyListener);
+    public MessageHandler getMessageHandler(SessionWrapper sessionWrapper) {
+        return messageHandlerFactory.getInstance(sessionWrapper, sessionDestroyListener);
     }
 
 

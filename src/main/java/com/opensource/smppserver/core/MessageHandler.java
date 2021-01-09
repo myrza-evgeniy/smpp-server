@@ -20,9 +20,9 @@ import java.util.concurrent.atomic.AtomicLong;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @RequiredArgsConstructor
-public class IncomingMessageHandler extends DefaultSmppSessionHandler {
+public class MessageHandler extends DefaultSmppSessionHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(IncomingMessageHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MessageHandler.class);
 
     private final SessionWrapper sessionWrapper;
     private final SessionDestroyListener sessionDestroyListener;
