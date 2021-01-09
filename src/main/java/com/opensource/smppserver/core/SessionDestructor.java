@@ -26,7 +26,7 @@ public class SessionDestructor implements SessionDestroyListener {
 
                 sessionStorage.removeSessionById(sessionId);
             } else {
-                LOGGER.error("Session {} of customer {} not found in the cache", sessionId, session.getConfiguration().getSystemId());
+                LOGGER.error("Session {} of customer {} not found in the session storage", sessionId, session.getConfiguration().getSystemId());
                 session.destroy();
             }
         } catch (Exception e) {
