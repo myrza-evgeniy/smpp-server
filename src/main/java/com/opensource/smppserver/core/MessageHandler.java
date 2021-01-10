@@ -71,17 +71,21 @@ public class MessageHandler extends DefaultSmppSessionHandler {
         try {
             LOGGER.info("Accepted unbind request in session {} from customer {}", sessionWrapper.getSystemId(), sessionWrapper.getSystemId());
             sessionWrapper.getSession().sendResponsePdu(unbind.createResponse());
-            msgExecutor.shutdown();
-            msgExecutor.awaitTermination(5, TimeUnit.SECONDS);
         } catch (UnrecoverablePduException | SmppChannelException | InterruptedException | RecoverablePduException e) {
             LOGGER.error("Error sending unbind_resp to {}. Reason: ", sessionWrapper.getSystemId(), e);
         } finally {
-            sessionDestroyListener.destroy(sessionWrapper.getSessionId(), sessionWrapper.getSession());
-
-            if (!msgExecutor.isTerminated()) {
-                LOGGER.info("Cancel non-finished tasks of msgExecutor");
+            try {
+                sessionDestroyListener.destroy(sessionWrapper.getSessionId(), sessionWrapper.getSession());
+                msgExecutor.shutdown();
+                msgExecutor.awaitTermination(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                LOGGER.warn("Shutdown msgExecutor interrupted because process timeout out");
+            } finally {
+                if (!msgExecutor.isTerminated()) {
+                    LOGGER.info("Cancel non-finished tasks of msgExecutor");
+                }
+                msgExecutor.shutdownNow();
             }
-            msgExecutor.shutdownNow();
         }
     }
 
