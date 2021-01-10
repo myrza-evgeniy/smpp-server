@@ -6,6 +6,7 @@ import com.cloudhopper.smpp.pdu.*;
 import com.cloudhopper.smpp.type.RecoverablePduException;
 import com.cloudhopper.smpp.type.SmppChannelException;
 import com.cloudhopper.smpp.type.UnrecoverablePduException;
+import com.opensource.smppserver.service.MessageIdGenerator;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +17,6 @@ import org.springframework.stereotype.Component;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
@@ -26,9 +26,9 @@ public class MessageHandler extends DefaultSmppSessionHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageHandler.class);
 
     private final SessionWrapper sessionWrapper;
+    private final MessageIdGenerator messageIdGenerator;
     private final SessionDestroyListener sessionDestroyListener;
     private final ExecutorService msgExecutor = Executors.newFixedThreadPool(100);
-    private final AtomicLong messageId = new AtomicLong(0);
 
     @Override
     public PduResponse firePduRequestReceived(PduRequest pduRequest) {
@@ -100,7 +100,7 @@ public class MessageHandler extends DefaultSmppSessionHandler {
 
     private void onAcceptSubmitSm(SubmitSm submitSm) {
         LOGGER.debug("Accepted submit_sm in session {} from customer {}", sessionWrapper.getSystemId(), sessionWrapper.getSystemId());
-        final long messageId = this.messageId.incrementAndGet();
+        final long messageId = this.messageIdGenerator.generateNext();
         final SubmitSmResp response = submitSm.createResponse();
         response.setMessageId(Long.toString(messageId));
 
