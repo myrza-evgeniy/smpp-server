@@ -33,7 +33,7 @@ public class MessageHandler extends DefaultSmppSessionHandler {
     @Override
     public PduResponse firePduRequestReceived(PduRequest pduRequest) {
         try {
-            if (isNotValidSessionState()) return getDefaultResponseForUnexpectedError(pduRequest);
+            if (isNotValidSessionState()) return null;
 
             switch (pduRequest.getCommandId()) {
                 case SmppConstants.CMD_ID_SUBMIT_SM:
