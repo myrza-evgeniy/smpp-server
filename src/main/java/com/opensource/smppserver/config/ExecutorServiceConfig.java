@@ -8,6 +8,9 @@ import org.springframework.context.annotation.Scope;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Configuration
 public class ExecutorServiceConfig {
@@ -21,9 +24,22 @@ public class ExecutorServiceConfig {
         return Executors.newFixedThreadPool(msgExecutorPoolSize);
     }
 
-    @Bean(autowireCandidate = false)
-    @Scope(ConfigurableBeanFactory.SCOPE_SINGLETON)
+    @Bean
     public ExecutorService sessionExecutor() {
         return Executors.newCachedThreadPool();
+    }
+
+    @Bean
+    public ScheduledExecutorService createMonitorExpiredRequests() {
+        return Executors.newScheduledThreadPool(1, new ThreadFactory() {
+            private final AtomicInteger sequence = new AtomicInteger(0);
+
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread t = new Thread(r);
+                t.setName("SmppCustomerSessionWindowMonitorPool-" + sequence.getAndIncrement());
+                return t;
+            }
+        });
     }
 }
