@@ -29,6 +29,6 @@ public class ServerConfig {
         smppServerConfiguration.setDefaultWindowSize(1000);
 
         return new DefaultSmppServer(smppServerConfiguration, sessionHandler,
-                executorServiceConfig.sessionExecutor(), executorServiceConfig.createMonitorExpiredRequests());
+                executorServiceConfig.sessionExecutor(), executorServiceConfig.monitorExpiredRequests());
     }
 }

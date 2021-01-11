@@ -30,7 +30,7 @@ public class ExecutorServiceConfig {
     }
 
     @Bean
-    public ScheduledExecutorService createMonitorExpiredRequests() {
+    public ScheduledExecutorService monitorExpiredRequests() {
         return Executors.newScheduledThreadPool(1, new ThreadFactory() {
             private final AtomicInteger sequence = new AtomicInteger(0);
 
