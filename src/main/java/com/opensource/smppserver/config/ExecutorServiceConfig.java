@@ -1,6 +1,5 @@
 package com.opensource.smppserver.config;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Bean;
@@ -11,7 +10,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 @Configuration
-@RequiredArgsConstructor
 public class ExecutorServiceConfig {
 
     @Value("${executor.pool.size.msg.handler:100}")
