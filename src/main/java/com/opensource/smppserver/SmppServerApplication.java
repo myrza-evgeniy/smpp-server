@@ -9,5 +9,4 @@ public class SmppServerApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(SmppServerApplication.class, args);
 	}
-
 }

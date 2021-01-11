@@ -3,6 +3,7 @@ package com.opensource.smppserver.service.impl;
 import com.cloudhopper.smpp.SmppServerConfiguration;
 import com.cloudhopper.smpp.impl.DefaultSmppServer;
 import com.cloudhopper.smpp.type.SmppChannelException;
+import com.opensource.smppserver.config.ExecutorServiceConfig;
 import com.opensource.smppserver.config.ServerConfigProperties;
 import com.opensource.smppserver.core.SessionHandler;
 import com.opensource.smppserver.service.ServerService;
@@ -20,12 +21,13 @@ public class ServerServiceImpl implements ServerService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerServiceImpl.class);
 
+    private final ExecutorServiceConfig executorServiceConfig;
     private final ServerConfigProperties serverConfigProperties;
     private final SessionHandler sessionHandler;
 
     private DefaultSmppServer smppServer;
+    private ExecutorService sessionExecutor;
     private ScheduledExecutorService monitor;
-    private ExecutorService executor;
 
     @Override
     public void start() {
@@ -46,7 +48,7 @@ public class ServerServiceImpl implements ServerService {
             LOGGER.error("Failed to stop smpp server. ", e);
         } finally {
             monitor.shutdown();
-            executor.shutdown();
+            sessionExecutor.shutdown();
         }
     }
 
@@ -62,9 +64,13 @@ public class ServerServiceImpl implements ServerService {
         smppServerConfiguration.setDefaultWindowSize(1000);
 
         monitor = createMonitor();
-        executor = Executors.newCachedThreadPool();
+        sessionExecutor = getSessionExecutor();
 
-        smppServer = new DefaultSmppServer(smppServerConfiguration, sessionHandler, executor, monitor);
+        smppServer = new DefaultSmppServer(smppServerConfiguration, sessionHandler, sessionExecutor, monitor);
+    }
+
+    private ExecutorService getSessionExecutor() {
+        return executorServiceConfig.sessionExecutor();
     }
 
     // TODO: Need to investigate incrementing this sequence

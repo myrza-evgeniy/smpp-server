@@ -15,7 +15,6 @@ import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -28,7 +27,7 @@ public class MessageHandler extends DefaultSmppSessionHandler {
     private final SessionWrapper sessionWrapper;
     private final MessageIdGenerator messageIdGenerator;
     private final SessionDestroyListener sessionDestroyListener;
-    private final ExecutorService msgExecutor = Executors.newFixedThreadPool(100);
+    private final ExecutorService msgExecutor;
 
     @Override
     public PduResponse firePduRequestReceived(PduRequest pduRequest) {

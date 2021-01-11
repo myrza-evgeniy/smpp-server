@@ -16,3 +16,9 @@ smpp:
     requestPoolSize: 2000
     enquireIntervals: 5
     attempts: 3
+
+executor:
+  pool:
+    size:
+      msg:
+        handler: 300
