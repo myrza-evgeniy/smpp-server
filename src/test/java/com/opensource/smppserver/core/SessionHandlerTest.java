@@ -1,5 +1,6 @@
 package com.opensource.smppserver.core;
 
+import com.opensource.smppserver.service.impl.SessionHandler;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

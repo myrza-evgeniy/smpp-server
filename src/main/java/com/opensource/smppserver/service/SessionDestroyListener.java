@@ -1,4 +1,4 @@
-package com.opensource.smppserver.core;
+package com.opensource.smppserver.service;
 
 import com.cloudhopper.smpp.SmppServerSession;
 

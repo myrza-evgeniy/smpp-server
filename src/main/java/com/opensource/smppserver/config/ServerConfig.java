@@ -2,7 +2,7 @@ package com.opensource.smppserver.config;
 
 import com.cloudhopper.smpp.SmppServerConfiguration;
 import com.cloudhopper.smpp.impl.DefaultSmppServer;
-import com.opensource.smppserver.core.SessionHandler;
+import com.opensource.smppserver.service.impl.SessionHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;

@@ -2,6 +2,7 @@ package com.opensource.smppserver.core;
 
 import com.cloudhopper.smpp.SmppConstants;
 import com.cloudhopper.smpp.pdu.*;
+import com.opensource.smppserver.service.impl.MessageHandler;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

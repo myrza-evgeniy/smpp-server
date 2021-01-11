@@ -1,8 +1,8 @@
 package com.opensource.smppserver.config;
 
-import com.opensource.smppserver.core.MessageHandler;
-import com.opensource.smppserver.core.SessionDestroyListener;
-import com.opensource.smppserver.core.SessionWrapper;
+import com.opensource.smppserver.service.impl.MessageHandler;
+import com.opensource.smppserver.service.SessionDestroyListener;
+import com.opensource.smppserver.service.impl.SessionWrapper;
 import com.opensource.smppserver.service.MessageIdGenerator;
 import com.opensource.smppserver.service.impl.CacheMessageIdGenerator;
 import lombok.RequiredArgsConstructor;
