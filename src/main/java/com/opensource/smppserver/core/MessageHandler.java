@@ -68,10 +68,10 @@ public class MessageHandler extends DefaultSmppSessionHandler {
 
     private void onAcceptUnbind(Unbind unbind) {
         try {
-            LOGGER.info("Accepted unbind request in session {} from customer {}", sessionWrapper.getSystemId(), sessionWrapper.getSystemId());
+            LOGGER.info("Accepted unbind request from customer {} in session {}", sessionWrapper.getSystemId(), sessionWrapper.getSessionId());
             sessionWrapper.getSession().sendResponsePdu(unbind.createResponse());
         } catch (UnrecoverablePduException | SmppChannelException | InterruptedException | RecoverablePduException e) {
-            LOGGER.error("Error sending unbind_resp to {}. Reason: ", sessionWrapper.getSystemId(), e);
+            LOGGER.error("Error sending unbind_resp to customer {} in session {}. Reason: ", sessionWrapper.getSystemId(), sessionWrapper.getSessionId(), e);
         } finally {
             try {
                 sessionDestroyListener.destroy(sessionWrapper.getSessionId(), sessionWrapper.getSession());
@@ -90,15 +90,15 @@ public class MessageHandler extends DefaultSmppSessionHandler {
 
     private void onAcceptEnquireLink(EnquireLink enquireLink) {
         try {
-            LOGGER.debug("Accepted enquire_link in session {} from customer {}", sessionWrapper.getSystemId(), sessionWrapper.getSystemId());
+            LOGGER.debug("Accepted enquire_link from customer {} in session {} ", sessionWrapper.getSystemId(), sessionWrapper.getSystemId());
             sessionWrapper.getSession().sendResponsePdu(enquireLink.createResponse());
         } catch (UnrecoverablePduException | SmppChannelException | InterruptedException | RecoverablePduException e) {
-            LOGGER.error("Error sending enquire_link_resp to {}. Reason: ", sessionWrapper.getSystemId(), e);
+            LOGGER.error("Error sending enquire_link_resp to customer {} in session {}. Reason: ", sessionWrapper.getSystemId(), sessionWrapper.getSessionId(), e);
         }
     }
 
     private void onAcceptSubmitSm(SubmitSm submitSm) {
-        LOGGER.debug("Accepted submit_sm in session {} from customer {}", sessionWrapper.getSystemId(), sessionWrapper.getSystemId());
+        LOGGER.debug("Accepted submit_sm from customer {} in session {}", sessionWrapper.getSystemId(), sessionWrapper.getSessionId());
         final long messageId = this.messageIdGenerator.generateNext();
         final SubmitSmResp response = submitSm.createResponse();
         response.setMessageId(Long.toString(messageId));
@@ -106,7 +106,7 @@ public class MessageHandler extends DefaultSmppSessionHandler {
         try {
             sessionWrapper.getSession().sendResponsePdu(response);
         } catch (UnrecoverablePduException | SmppChannelException | InterruptedException | RecoverablePduException e) {
-            LOGGER.error("Error sending enquire_link_resp to {}. Reason: ", sessionWrapper.getSystemId(), e);
+            LOGGER.error("Error sending enquire_link_resp to customer {} in session {}. Reason: ", sessionWrapper.getSystemId(), sessionWrapper.getSessionId(), e);
         }
     }
 
