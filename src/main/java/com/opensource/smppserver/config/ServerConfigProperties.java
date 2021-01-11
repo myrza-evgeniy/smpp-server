@@ -1,11 +1,15 @@
 package com.opensource.smppserver.config;
 
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
-@Data
+@Configuration
 @ConfigurationProperties("smpp.server")
-public class ServerProperties {
+@Setter
+@Getter
+public class ServerConfigProperties {
 
     private String host;
 

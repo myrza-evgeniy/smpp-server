@@ -3,7 +3,7 @@ package com.opensource.smppserver.service.impl;
 import com.cloudhopper.smpp.SmppServerConfiguration;
 import com.cloudhopper.smpp.impl.DefaultSmppServer;
 import com.cloudhopper.smpp.type.SmppChannelException;
-import com.opensource.smppserver.config.ServerProperties;
+import com.opensource.smppserver.config.ServerConfigProperties;
 import com.opensource.smppserver.core.SessionHandler;
 import com.opensource.smppserver.service.ServerService;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ public class ServerServiceImpl implements ServerService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ServerServiceImpl.class);
 
-    private final ServerProperties serverProperties;
+    private final ServerConfigProperties serverConfigProperties;
     private final SessionHandler sessionHandler;
 
     private DefaultSmppServer smppServer;
@@ -53,9 +53,9 @@ public class ServerServiceImpl implements ServerService {
     // TODO: Need to remake configure server
     private void configureSmppServer() {
         SmppServerConfiguration smppServerConfiguration = new SmppServerConfiguration();
-        smppServerConfiguration.setHost(serverProperties.getHost());
-        smppServerConfiguration.setPort(serverProperties.getPort());
-        smppServerConfiguration.setBindTimeout(serverProperties.getWaitBindTimeout());
+        smppServerConfiguration.setHost(serverConfigProperties.getHost());
+        smppServerConfiguration.setPort(serverConfigProperties.getPort());
+        smppServerConfiguration.setBindTimeout(serverConfigProperties.getWaitBindTimeout());
         smppServerConfiguration.setDefaultRequestExpiryTimeout(4000);
         smppServerConfiguration.setDefaultWindowMonitorInterval(2000);
         smppServerConfiguration.setDefaultWindowWaitTimeout(30000);
