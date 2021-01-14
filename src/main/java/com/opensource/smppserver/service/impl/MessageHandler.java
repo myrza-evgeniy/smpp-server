@@ -9,8 +9,7 @@ import com.cloudhopper.smpp.type.UnrecoverablePduException;
 import com.opensource.smppserver.service.MessageIdGenerator;
 import com.opensource.smppserver.service.SessionDestroyListener;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -21,9 +20,8 @@ import java.util.concurrent.TimeUnit;
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @RequiredArgsConstructor
+@Log4j2
 public class MessageHandler extends DefaultSmppSessionHandler {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(MessageHandler.class);
 
     private final SessionWrapper sessionWrapper;
     private final MessageIdGenerator messageIdGenerator;
@@ -55,13 +53,13 @@ public class MessageHandler extends DefaultSmppSessionHandler {
             }
         } catch (Exception e) {
             if (isNotValidSessionState()) {
-                LOGGER.error("Current session state is not valid to continue communication.");
+                log.error("Current session state is not valid to continue communication.");
                 return null;
             } else if (pduRequest == null) {
-                LOGGER.error("Received null PDU request from customer {}.", sessionWrapper.getSystemId());
+                log.error("Received null PDU request from customer {}.", sessionWrapper.getSystemId());
                 return null;
             } else {
-                LOGGER.error("Error while trying to handle incoming pdu request from customer {}.", sessionWrapper.getSystemId(), e);
+                log.error("Error while trying to handle incoming pdu request from customer {}.", sessionWrapper.getSystemId(), e);
                 return getDefaultResponseForUnexpectedError(pduRequest);
             }
         }
@@ -69,20 +67,20 @@ public class MessageHandler extends DefaultSmppSessionHandler {
 
     private void onAcceptUnbind(Unbind unbind) {
         try {
-            LOGGER.info("Accepted unbind request from customer {} in session {}", sessionWrapper.getSystemId(), sessionWrapper.getSessionId());
+            log.info("Accepted unbind request from customer {} in session {}", sessionWrapper.getSystemId(), sessionWrapper.getSessionId());
             sessionWrapper.getSession().sendResponsePdu(unbind.createResponse());
         } catch (UnrecoverablePduException | SmppChannelException | InterruptedException | RecoverablePduException e) {
-            LOGGER.error("Error sending unbind_resp to customer {} in session {}. Reason: ", sessionWrapper.getSystemId(), sessionWrapper.getSessionId(), e);
+            log.error("Error sending unbind_resp to customer {} in session {}. Reason: ", sessionWrapper.getSystemId(), sessionWrapper.getSessionId(), e);
         } finally {
             try {
                 sessionDestroyListener.destroy(sessionWrapper.getSessionId(), sessionWrapper.getSession());
                 msgExecutor.shutdown();
                 msgExecutor.awaitTermination(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
-                LOGGER.warn("Shutdown msgExecutor interrupted because process timeout out");
+                log.warn("Shutdown msgExecutor interrupted because process timeout out");
             } finally {
                 if (!msgExecutor.isTerminated()) {
-                    LOGGER.info("Cancel non-finished tasks of msgExecutor");
+                    log.info("Cancel non-finished tasks of msgExecutor");
                 }
                 msgExecutor.shutdownNow();
             }
@@ -91,15 +89,15 @@ public class MessageHandler extends DefaultSmppSessionHandler {
 
     private void onAcceptEnquireLink(EnquireLink enquireLink) {
         try {
-            LOGGER.debug("Accepted enquire_link from customer {} in session {} ", sessionWrapper.getSystemId(), sessionWrapper.getSystemId());
+            log.debug("Accepted enquire_link from customer {} in session {} ", sessionWrapper.getSystemId(), sessionWrapper.getSystemId());
             sessionWrapper.getSession().sendResponsePdu(enquireLink.createResponse());
         } catch (UnrecoverablePduException | SmppChannelException | InterruptedException | RecoverablePduException e) {
-            LOGGER.error("Error sending enquire_link_resp to customer {} in session {}. Reason: ", sessionWrapper.getSystemId(), sessionWrapper.getSessionId(), e);
+            log.error("Error sending enquire_link_resp to customer {} in session {}. Reason: ", sessionWrapper.getSystemId(), sessionWrapper.getSessionId(), e);
         }
     }
 
     private void onAcceptSubmitSm(SubmitSm submitSm) {
-        LOGGER.debug("Accepted submit_sm from customer {} in session {}", sessionWrapper.getSystemId(), sessionWrapper.getSessionId());
+        log.debug("Accepted submit_sm from customer {} in session {}", sessionWrapper.getSystemId(), sessionWrapper.getSessionId());
         final long messageId = this.messageIdGenerator.generateNext();
         final SubmitSmResp response = submitSm.createResponse();
         response.setMessageId(Long.toString(messageId));
@@ -107,18 +105,18 @@ public class MessageHandler extends DefaultSmppSessionHandler {
         try {
             sessionWrapper.getSession().sendResponsePdu(response);
         } catch (UnrecoverablePduException | SmppChannelException | InterruptedException | RecoverablePduException e) {
-            LOGGER.error("Error sending enquire_link_resp to customer {} in session {}. Reason: ", sessionWrapper.getSystemId(), sessionWrapper.getSessionId(), e);
+            log.error("Error sending enquire_link_resp to customer {} in session {}. Reason: ", sessionWrapper.getSystemId(), sessionWrapper.getSessionId(), e);
         }
     }
 
     private boolean isNotValidSessionState() {
         if (sessionWrapper == null || sessionWrapper.getSession() == null) {
-            LOGGER.error("Unexpected critical situation - session is null.");
+            log.error("Unexpected critical situation - session is null.");
             return true;
         }
 
         if (!sessionWrapper.getSession().isBound()) {
-            LOGGER.error("Unexpected critical situation - session is unbound.");
+            log.error("Unexpected critical situation - session is unbound.");
             return true;
         }
         return false;

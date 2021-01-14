@@ -12,15 +12,13 @@ import com.opensource.smppserver.repository.SessionStorage;
 import com.opensource.smppserver.service.AuthService;
 import com.opensource.smppserver.service.SessionDestroyListener;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Log4j2
 public class SessionHandler implements SmppServerHandler {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SessionHandler.class);
 
     private final AuthService authService;
     private final SessionStorage sessionStorage;
@@ -48,7 +46,7 @@ public class SessionHandler implements SmppServerHandler {
 
     @Override
     public void sessionDestroyed(Long sessionId, SmppServerSession session) {
-        LOGGER.info("Session {} of customer {} destroyed. Try to free up resources.", sessionId, session.getConfiguration().getSystemId());
+        log.info("Session {} of customer {} destroyed. Try to free up resources.", sessionId, session.getConfiguration().getSystemId());
         sessionDestroyListener.destroy(sessionId, session);
     }
 

@@ -4,15 +4,13 @@ import com.cloudhopper.smpp.SmppServerSession;
 import com.opensource.smppserver.repository.SessionStorage;
 import com.opensource.smppserver.service.SessionDestroyListener;
 import lombok.RequiredArgsConstructor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Log4j2
 public class SessionDestructor implements SessionDestroyListener {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(SessionDestructor.class);
 
     private final SessionStorage sessionStorage;
 
@@ -28,12 +26,12 @@ public class SessionDestructor implements SessionDestroyListener {
 
                 sessionStorage.removeSessionById(sessionId);
             } else {
-                LOGGER.error("Session {} of customer {} not found in the session storage", sessionId, session.getConfiguration().getSystemId());
+                log.error("Session {} of customer {} not found in the session storage", sessionId, session.getConfiguration().getSystemId());
                 session.destroy();
             }
         } catch (Exception e) {
             if (sessionWrapper != null) sessionStorage.removeSessionById(sessionId);
-            LOGGER.error("Destroy session {} of customer {} failed. ", sessionId, session.getConfiguration().getSystemId(), e);
+            log.error("Destroy session {} of customer {} failed. ", sessionId, session.getConfiguration().getSystemId(), e);
         }
     }
 }

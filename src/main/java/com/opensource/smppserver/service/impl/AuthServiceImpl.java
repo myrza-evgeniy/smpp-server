@@ -4,18 +4,16 @@ import com.cloudhopper.smpp.SmppBindType;
 import com.cloudhopper.smpp.SmppSessionConfiguration;
 import com.cloudhopper.smpp.pdu.BaseBind;
 import com.opensource.smppserver.service.AuthService;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 @Service
+@Log4j2
 public class AuthServiceImpl implements AuthService {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthServiceImpl.class);
 
     @Override
     public boolean isAuthenticated(SmppSessionConfiguration sessionConfiguration, BaseBind<?> bindRequest) {
-        LOGGER.info("Accepted new bind request from customer with params: host:{}, systemId: {}, bind type: {}",
+        log.info("Accepted new bind request from customer with params: host:{}, systemId: {}, bind type: {}",
                 sessionConfiguration.getHost(), sessionConfiguration.getSystemId(), sessionConfiguration.getType().name());
 
         final String systemId = bindRequest.getSystemId();
